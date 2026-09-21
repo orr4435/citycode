@@ -39,6 +39,11 @@ https://github.com/anomalyco/models.dev
   bun dev
   ```
 
+- On a fresh machine, `script/setup-windows.ps1` (Windows) or `script/setup.sh` (macOS/Linux)
+  will install the base tooling (Git, Bun, Node.js/npm, Python, and the CUDA Toolkit if an
+  NVIDIA GPU is detected) and then run `bun install` for you. Every step is skipped if
+  already installed, so it's safe to re-run.
+
 ### Running against a different directory
 
 By default, `bun dev` runs OpenCode in the `packages/opencode` directory. To run it against a different directory or repository:
