@@ -186,8 +186,8 @@ export function Tips(props: { api: TuiPluginApi; connected?: boolean }) {
 
 // Maps the literal English tip text (below) to its i18n key, for locales with a full translation.
 const TRANSLATED_TIPS: Record<string, Parameters<typeof translate>[1]> = {
-  "Create a plugin to prevent CityCode from reading sensitive files": "tips.prevent_reading",
-  "Run {highlight}opencode serve{/highlight} for headless API access to CityCode": "tips.headless",
+  "Create a plugin to prevent CODE-CAL from reading sensitive files": "tips.prevent_reading",
+  "Run {highlight}opencode serve{/highlight} for headless API access to CODE-CAL": "tips.headless",
 }
 
 const TIPS: Tip[] = [
@@ -262,12 +262,12 @@ const TIPS: Tip[] = [
   "Tool definitions can invoke scripts written in Python, Go, etc",
   "Add {highlight}.ts{/highlight} files to {highlight}.opencode/plugins/{/highlight} for event hooks",
   "Use plugins to send OS notifications when sessions complete",
-  "Create a plugin to prevent CityCode from reading sensitive files",
+  "Create a plugin to prevent CODE-CAL from reading sensitive files",
   "Use {highlight}opencode run{/highlight} for non-interactive scripting",
   "Use {highlight}opencode --continue{/highlight} to resume the last session",
   "Use {highlight}opencode run -f file.ts{/highlight} to attach files via CLI",
   "Use {highlight}--format json{/highlight} for machine-readable output in scripts",
-  "Run {highlight}opencode serve{/highlight} for headless API access to CityCode",
+  "Run {highlight}opencode serve{/highlight} for headless API access to CODE-CAL",
   "Use {highlight}opencode run --attach{/highlight} to connect to a running server",
   "Run {highlight}opencode upgrade{/highlight} to update to the latest version",
   "Run {highlight}opencode auth list{/highlight} to see all configured providers",

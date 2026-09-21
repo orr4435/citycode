@@ -29,6 +29,9 @@ import { Glob } from "@opencode-ai/core/util/glob"
 import { readFile } from "node:fs/promises"
 import path from "node:path"
 
+// Themes that were renamed; saved preferences using the old id keep working.
+const LEGACY_THEMES: Record<string, string> = { citycode: "code-cal" }
+
 export type ThemeSource = Readonly<{
   discover(): Promise<Record<string, unknown>>
   subscribeRefresh?(refresh: () => void): () => void
@@ -93,7 +96,7 @@ const [store, setStore] = createStore<State>({
   themes: allThemes(),
   mode: "dark",
   lock: undefined,
-  active: "citycode",
+  active: "code-cal",
   ready: false,
 })
 
@@ -118,15 +121,15 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
         if (!lock && pick(kv.get("theme_mode")) !== undefined) kv.set("theme_mode", undefined)
         draft.mode = mode
         draft.lock = lock
-        const active = config.theme ?? kv.get("theme", "citycode")
-        draft.active = typeof active === "string" ? active : "citycode"
+        const active = config.theme ?? kv.get("theme", "code-cal")
+        draft.active = typeof active === "string" ? (LEGACY_THEMES[active] ?? active) : "code-cal"
         draft.ready = false
       }),
     )
 
     createEffect(() => {
       const theme = config.theme
-      if (theme) setStore("active", theme)
+      if (theme) setStore("active", LEGACY_THEMES[theme] ?? theme)
     })
 
     function syncCustomThemes() {
@@ -140,7 +143,7 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
             }, {}),
           )
         })
-        .catch(() => setStore("active", "citycode"))
+        .catch(() => setStore("active", "code-cal"))
     }
 
     onMount(() => {
@@ -159,7 +162,7 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
           if (!colors.palette[0]) {
             if (hasResolvedSystemTheme) return
             setSystemTheme(undefined)
-            if (store.active === "system") setStore("active", "citycode")
+            if (store.active === "system") setStore("active", "code-cal")
             return
           }
           const next = store.lock ?? terminalMode(colors) ?? mode
@@ -174,7 +177,7 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
         .catch(() => {
           if (hasResolvedSystemTheme) return
           setSystemTheme(undefined)
-          if (store.active === "system") setStore("active", "citycode")
+          if (store.active === "system") setStore("active", "code-cal")
         })
     }
 

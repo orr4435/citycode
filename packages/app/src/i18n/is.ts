@@ -94,6 +94,7 @@ const desktop = [
 ]
 
 export const dict = {
+  "app.compat.island": "Compatible with Island Enterprise Browser",
   ...Object.fromEntries(DESKTOP_NATIVE_KEYS.map((key, index) => [key, desktop[index]])),
   "command.category.suggested": "Tillögur",
   "command.category.view": "Skoða",

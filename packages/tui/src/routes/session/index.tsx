@@ -30,8 +30,6 @@ import {
   addDefaultParsers,
   TextAttributes,
   RGBA,
-  type Renderable,
-  type RenderNodeContext,
 } from "@opentui/core"
 import { Prompt, type PromptRef } from "../../component/prompt"
 import type {
@@ -45,8 +43,7 @@ import type {
   SessionStatus,
 } from "@opencode-ai/sdk/v2"
 import { useLocal } from "../../context/local"
-import { useLocale } from "../../context/locale"
-import { correctMarkdownRaw } from "../../i18n/bidi"
+import { bidiText, rtlMarkdown, toVisualRtl } from "../../i18n/bidi"
 import { Locale } from "../../util/locale"
 import { webSearchProviderLabel } from "../../util/tool-display"
 import { Dynamic, useRenderer, useTerminalDimensions, type JSX } from "@opentui/solid"
@@ -1380,7 +1377,10 @@ function UserMessage(props: {
 }) {
   const ctx = use()
   const local = useLocal()
-  const locale = useLocale()
+  const dimensions = useTerminalDimensions()
+  const [bubbleWidth, setBubbleWidth] = createSignal(0)
+  const textWidth = () => Math.max(10, (bubbleWidth() || dimensions().width - 8) - 3)
+  let bubble: BoxRenderable | undefined
   const text = createMemo(() => {
     const texts = props.parts
       .map((x) => {
@@ -1426,13 +1426,10 @@ function UserMessage(props: {
             paddingLeft={2}
             backgroundColor={hover() ? theme.backgroundElement : theme.backgroundPanel}
             flexShrink={0}
+            ref={(el: BoxRenderable) => (bubble = el)}
+            onSizeChange={() => setBubbleWidth(bubble?.width ?? 0)}
           >
-            <text fg={theme.text}>
-              {text()
-                .split("\n")
-                .map((line) => locale.visual(line))
-                .join("\n")}
-            </text>
+            <text fg={theme.text}>{bidiText(text(), textWidth())}</text>
             <Show when={files().length}>
               <box flexDirection="row" paddingBottom={metadataVisible() ? 1 : 0} paddingTop={1} gap={1} flexWrap="wrap">
                 <For each={files()}>
@@ -1602,6 +1599,10 @@ const INLINE_TOOL_ICON_WIDTH = 2
 function ReasoningPart(props: { last: boolean; part: ReasoningPart; message: AssistantMessage }) {
   const { theme } = useTheme()
   const ctx = use()
+  const dimensions = useTerminalDimensions()
+  const [bodyWidth, setBodyWidth] = createSignal(0)
+  const rtlWidth = () => Math.max(10, (bodyWidth() || dimensions().width - 10) - 2)
+  let body: BoxRenderable | undefined
   // Collapsed by default in hide mode: a single line throughout, so the
   // layout never shifts. Click to open the full markdown block, click to close.
   const [expanded, setExpanded] = createSignal(false)
@@ -1641,19 +1642,24 @@ function ReasoningPart(props: { last: boolean; part: ReasoningPart; message: Ass
             toggleable={inMinimal() && !opaque()}
             open={!inMinimal() || expanded()}
             done={isDone()}
-            title={summary().title}
+            title={summary().title ? toVisualRtl(summary().title!) : summary().title}
             duration={isDone() ? Locale.duration(duration()) : undefined}
             encrypted={opaque()}
           />
         </box>
         <Show when={!opaque() && (!inMinimal() || expanded()) && summary().body}>
-          <box paddingLeft={inMinimal() ? 2 : 0} marginTop={1}>
+          <box
+            paddingLeft={inMinimal() ? 2 : 0}
+            marginTop={1}
+            ref={(el: BoxRenderable) => (body = el)}
+            onSizeChange={() => setBodyWidth((body?.width ?? 0) - (inMinimal() ? 2 : 0))}
+          >
             <code
               filetype="markdown"
               drawUnstyledText={false}
               streaming={true}
               syntaxStyle={syntax()}
-              content={summary().body}
+              content={rtlMarkdown(summary().body, rtlWidth(), { conceal: ctx.conceal() })}
               conceal={ctx.conceal()}
               fg={theme.textMuted}
             />
@@ -1699,52 +1705,39 @@ function ReasoningHeader(props: {
   )
 }
 
-// opentui's markdown renderer has no bidi awareness: every block (including plain
-// paragraphs) is handed to a tree-sitter syntax highlighter as raw markdown source, so
-// Hebrew/Arabic prose in an assistant reply renders mirrored. This hooks the documented
-// `renderNode` extension point and corrects the block's raw text *before* opentui ever
-// parses it, so its normal markdown parsing, syntax highlighting, and layout all run
-// unchanged on already-corrected text. See `correctMarkdownRaw` for exactly which lines
-// are safe to touch (plain prose only — lines with markdown syntax are left as-is).
-type MarkdownNode = { type?: string; raw?: string; text?: string; tokens?: MarkdownNode[]; items?: MarkdownNode[] }
-
-// Walks a block token and any nested prose (list items, list item paragraphs) and
-// bidi-corrects each one's raw text in place. Deliberately does not descend into code,
-// table, or html tokens.
-function bidiCorrectTree(node: MarkdownNode) {
-  if (node.type === "code" || node.type === "table" || node.type === "html") return
-  if (
-    (node.type === "paragraph" || node.type === "heading" || node.type === "text" || node.type === "list_item") &&
-    typeof node.raw === "string"
-  ) {
-    node.raw = correctMarkdownRaw(node.raw)
-    if (typeof node.text === "string") node.text = correctMarkdownRaw(node.text)
-  }
-  for (const child of node.tokens ?? []) bidiCorrectTree(child)
-  for (const item of node.items ?? []) bidiCorrectTree(item)
-}
-
-function bidiCorrectNode(token: unknown, context: RenderNodeContext): Renderable | null | undefined {
-  bidiCorrectTree(token as MarkdownNode)
-  return context.defaultRender()
-}
-
+// opentui has no bidi awareness, so Hebrew/Arabic in an assistant reply would render
+// mirrored. Instead of hooking opentui's per-block render (which streaming updates
+// bypass), the whole markdown source is converted to visual order before it is handed
+// over — wrapped to the real width of this box so each row reads correctly and stays
+// right-aligned. See `rtlMarkdown`.
 function TextPart(props: { last: boolean; part: TextPart; message: AssistantMessage }) {
   const ctx = use()
   const { theme, syntax } = useTheme()
+  const dimensions = useTerminalDimensions()
+  const [measured, setMeasured] = createSignal(0)
+  const width = () => Math.max(10, (measured() || dimensions().width - 8) - 4)
+  let box: BoxRenderable | undefined
   return (
     <Show when={props.part.text.trim()}>
-      <box ref={(el: BoxRenderable) => alwaysSeparate.add(el)} paddingLeft={3} marginTop={1} flexShrink={0}>
+      <box
+        ref={(el: BoxRenderable) => {
+          box = el
+          alwaysSeparate.add(el)
+        }}
+        onSizeChange={() => setMeasured(box?.width ?? 0)}
+        paddingLeft={3}
+        marginTop={1}
+        flexShrink={0}
+      >
         <markdown
           syntaxStyle={syntax()}
           streaming={true}
           internalBlockMode="top-level"
-          content={props.part.text.trim()}
+          content={rtlMarkdown(props.part.text.trim(), width(), { conceal: ctx.conceal() })}
           tableOptions={{ style: "grid" }}
           conceal={ctx.conceal()}
           fg={theme.markdownText}
           bg={theme.background}
-          renderNode={(token, context) => bidiCorrectNode(token, context)}
         />
       </box>
     </Show>

@@ -1,4 +1,5 @@
 export const dict = {
+  "app.compat.island": "Compatible with Island Enterprise Browser",
   "desktop.menu.app": "OpenCode އެވެ",
   "desktop.menu.file": "ފައިލް",
   "desktop.menu.edit": "ބަދަލު ގެނައުން",

@@ -8,6 +8,7 @@ import type {
 import type { Agent, PermissionRequest, Project, Provider, ProviderListResponse } from "@opencode-ai/sdk/v2/client"
 import type { Project as CurrentProject } from "@opencode-ai/client/promise"
 import { NormalizedProviderListResponse } from "@opencode-ai/session-ui/context"
+import { modelDisplayName, providerDisplayName } from "@/utils/model-alias"
 export { pathKey as directoryKey, type PathKey as DirectoryKey } from "@/utils/path-key"
 
 export const cmp = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
@@ -63,8 +64,11 @@ export function normalizeProviderList(
           provider.id,
           {
             ...provider,
+            name: providerDisplayName(provider.id, provider.name),
             models: Object.fromEntries(
-              Object.entries(provider.models).filter(([, model]) => model.status !== "deprecated"),
+              Object.entries(provider.models)
+                .filter(([, model]) => model.status !== "deprecated")
+                .map(([key, model]) => [key, { ...model, name: modelDisplayName(provider.id, model.id, model.name) }]),
             ),
           },
         ]),
@@ -76,7 +80,7 @@ export function normalizeProviderList(
   for (const provider of providers) {
     all.set(provider.id, {
       id: provider.id,
-      name: provider.name,
+      name: providerDisplayName(provider.id, provider.name),
       source: "custom",
       env: [],
       options: provider.settings ?? {},
@@ -96,7 +100,7 @@ export function normalizeProviderList(
         url: "",
         npm: model.package ?? provider.id,
       },
-      name: model.name,
+      name: modelDisplayName(model.providerID, model.id, model.name),
       family: model.family,
       capabilities: {
         temperature: false,

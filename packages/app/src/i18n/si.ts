@@ -1,4 +1,5 @@
 export const dict: Record<string, string> = {
+  "app.compat.island": "Compatible with Island Enterprise Browser",
   "desktop.menu.app": "OpenCode",
   "desktop.menu.file": "ගොනුව",
   "desktop.menu.edit": "සංස්කරණය කරන්න",

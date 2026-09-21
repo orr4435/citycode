@@ -90,6 +90,7 @@ export const DialogSettings: Component<{
             <div class="settings-v2-nav-footer">
               <span>{language.t("app.name.desktop")}</span>
               <span>v{platform.version}</span>
+              <span>{language.t("app.compat.island")}</span>
             </div>
           </div>
         </TabsV2.List>

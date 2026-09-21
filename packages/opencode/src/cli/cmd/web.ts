@@ -31,7 +31,7 @@ function getNetworkIPs() {
 export const WebCommand = effectCmd({
   command: "web",
   builder: (yargs) => withNetworkOptions(yargs),
-  describe: "start opencode server and open web interface",
+  describe: "start CODE-CAL server and open web interface",
   // Server loads instances per-request via x-opencode-directory header — no
   // ambient project InstanceContext needed at startup.
   instance: false,
@@ -77,6 +77,14 @@ export const WebCommand = effectCmd({
       const displayUrl = server.url.toString()
       UI.println(UI.Style.TEXT_INFO_BOLD + "  Web interface:    ", UI.Style.TEXT_NORMAL, displayUrl)
       open(displayUrl).catch(() => {})
+    }
+
+    const { embeddedUI } = yield* Effect.promise(() => import("../../server/shared/ui"))
+    const local = yield* Effect.promise(() => embeddedUI(process.env.OPENCODE_DISABLE_EMBEDDED_WEB_UI === "true"))
+    if (!local) {
+      UI.println(
+        UI.Style.TEXT_WARNING_BOLD + "!  Serving the hosted upstream UI. Run `bun run build:web` to serve this fork's web UI instead.",
+      )
     }
 
     yield* Effect.never

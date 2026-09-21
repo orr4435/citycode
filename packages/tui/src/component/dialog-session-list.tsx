@@ -18,6 +18,7 @@ import { errorMessage } from "../util/error"
 import { DialogSessionDeleteFailed } from "./dialog-session-delete-failed"
 import { useCommandShortcut } from "../keymap"
 import { useEvent } from "../context/event"
+import { toVisualRtl } from "../i18n/bidi"
 
 type SessionListFilter = { scope?: "project"; path?: string }
 
@@ -243,7 +244,7 @@ export function DialogSessionList() {
           ? () => <text fg={theme.accent}>{slot}</text>
           : undefined
       return {
-        title: isDeleting ? `Press ${deleteHint()} again to confirm` : x.title,
+        title: isDeleting ? `Press ${deleteHint()} again to confirm` : toVisualRtl(x.title),
         bg: isDeleting ? theme.error : undefined,
         value: x.id,
         category,

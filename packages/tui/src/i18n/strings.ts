@@ -22,13 +22,13 @@ export const LOCALE_LABEL: Record<Locale, string> = {
 // Terminal emulators generally do not implement the Unicode Bidirectional
 // Algorithm, so we translate strings but keep panel layout left-to-right.
 export const BRAND: Record<Locale, string> = {
-  en: "CityCode",
+  en: "CODE-CAL",
   he: "קוד קל",
 }
 
 // [muted part, bold part] for two-tone brand marks (e.g. the sidebar footer)
 export const BRAND_PARTS: Record<Locale, [string, string]> = {
-  en: ["City", "Code"],
+  en: ["CODE-", "CAL"],
   he: ["קוד", "קל"],
 }
 

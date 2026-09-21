@@ -13,6 +13,7 @@ import { useTheme } from "./theme"
 import { useToast } from "../ui/toast"
 import { useRoute } from "./route"
 import { usePermission } from "./permission"
+import * as Model from "../util/model"
 
 export type LocalTheme = {
   secondary: RGBA
@@ -268,7 +269,7 @@ export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
           const info = provider?.models[value.modelID]
           return {
             provider: provider?.name ?? value.providerID,
-            model: info?.name ?? value.modelID,
+            model: Model.displayName(value.providerID, value.modelID, info?.name),
             reasoning: info?.capabilities?.reasoning ?? false,
           }
         }),

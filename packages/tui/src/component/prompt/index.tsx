@@ -48,8 +48,7 @@ import { DialogAlert } from "../../ui/dialog-alert"
 import { useToast } from "../../ui/toast"
 import { useKV } from "../../context/kv"
 import { createFadeIn } from "../../util/signal"
-import { useLocale } from "../../context/locale"
-import { containsRtl } from "../../i18n/bidi"
+import { bidiText, containsRtl } from "../../i18n/bidi"
 import { DialogSkill } from "../dialog-skill"
 import { DialogWorkspaceUnavailable } from "../dialog-workspace-unavailable"
 import { useArgs } from "../../context/args"
@@ -1349,14 +1348,11 @@ export function Prompt(props: PromptProps) {
 
   // The textarea widget has no bidi support and draws Hebrew mirrored while typing.
   // We can't fix that widget itself, so show a live, correctly-ordered preview instead.
-  const locale = useLocale()
   const hasHebrewPreview = createMemo(() => containsRtl(store.prompt.input))
-  const previewText = createMemo(() =>
-    store.prompt.input
-      .split("\n")
-      .map((line) => locale.visual(line))
-      .join("\n"),
-  )
+  const [previewMeasured, setPreviewMeasured] = createSignal(0)
+  const previewWidth = () => Math.max(10, (previewMeasured() || dimensions().width - 16) - 3)
+  let previewRow: BoxRenderable | undefined
+  const previewText = createMemo(() => bidiText(store.prompt.input, previewWidth()))
   const previewFadeAlpha = createFadeIn(hasHebrewPreview, animationsEnabled)
   // Terminals can't shrink a font per-widget (every cell is a fixed size set by the
   // terminal app itself), so instead of shrinking, fade the raw mirrored text toward
@@ -1387,7 +1383,13 @@ export function Prompt(props: PromptProps) {
             width="100%"
           >
             <Show when={hasHebrewPreview()}>
-              <box flexDirection="row" gap={1} paddingBottom={1}>
+              <box
+                flexDirection="row"
+                gap={1}
+                paddingBottom={1}
+                ref={(el: BoxRenderable) => (previewRow = el)}
+                onSizeChange={() => setPreviewMeasured((previewRow?.width ?? 0) - 2)}
+              >
                 <text fg={tint(theme.backgroundElement, theme.textMuted, previewFadeAlpha())}>↺</text>
                 <text wrapMode="word" fg={tint(theme.backgroundElement, theme.primary, previewFadeAlpha())}>
                   {previewText()}

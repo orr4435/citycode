@@ -70,6 +70,7 @@ export const DialogSettings: Component<{ defaultValue?: string }> = (props) => {
             <div class="flex flex-col gap-1 pl-1 py-1 text-12-medium text-text-weak">
               <span>{language.t("app.name.desktop")}</span>
               <span class="text-11-regular">v{platform.version}</span>
+              <span class="text-11-regular">{language.t("app.compat.island")}</span>
             </div>
           </div>
         </Tabs.List>

@@ -8,6 +8,7 @@ import { DialogVariant } from "./dialog-variant"
 import * as fuzzysort from "fuzzysort"
 import { useConnected } from "./use-connected"
 import { useSync } from "../context/sync"
+import * as Model from "../util/model"
 
 export function DialogModel(props: { providerID?: string }) {
   const local = useLocal()
@@ -37,7 +38,7 @@ export function DialogModel(props: { providerID?: string }) {
           {
             key: item,
             value: { providerID: provider.id, modelID: model.id },
-            title: model.name ?? item.modelID,
+            title: Model.displayName(provider.id, model.id, model.name),
             description: provider.name,
             category,
             disabled: provider.id === "opencode" && model.id.includes("-nano"),
@@ -72,7 +73,7 @@ export function DialogModel(props: { providerID?: string }) {
           filter(([_, info]) => (props.providerID ? info.providerID === props.providerID : true)),
           map(([model, info]) => ({
             value: { providerID: provider.id, modelID: model },
-            title: info.name ?? model,
+            title: Model.displayName(provider.id, model, info.name),
             releaseDate: info.release_date,
             description: favorites.some((item) => item.providerID === provider.id && item.modelID === model)
               ? "(Favorite)"

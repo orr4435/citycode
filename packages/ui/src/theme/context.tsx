@@ -52,7 +52,7 @@ const names: Record<string, string> = {
   catppuccin: "Catppuccin",
   "catppuccin-frappe": "Catppuccin Frappe",
   "catppuccin-macchiato": "Catppuccin Macchiato",
-  citycode: "CityCode",
+  "code-cal": "CODE-CAL",
   claude: "Claude",
   cobalt2: "Cobalt2",
   cursor: "Cursor",
@@ -86,8 +86,11 @@ const names: Record<string, string> = {
 }
 const oc2Theme = oc2ThemeJson as DesktopTheme
 
+// Renamed themes: saved preferences using the old id keep working.
+const RENAMED: Record<string, string> = { "oc-1": "oc-2", citycode: "code-cal" }
+
 function normalize(id: string | null | undefined) {
-  return id === "oc-1" ? "oc-2" : id
+  return id ? (RENAMED[id] ?? id) : id
 }
 
 function read(key: string) {

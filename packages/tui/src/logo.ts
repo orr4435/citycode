@@ -1,7 +1,7 @@
-// left spells "city", right spells "code" -> CityCode
+// left spells "code-", right spells "cal" -> CODE-CAL
 export const logo = {
-  left: ["      ▄    █       ", "█▀▀▀  █   ▀█▀▀ █  █", "█___  █    █   ▀▄▄▀", "▀▀▀▀  ▀    ▀    █  "],
-  right: ["             ▄     ", "█▀▀▀ █▀▀█ █▀▀█ █▀▀█", "█___ █__█ █__█ █^^^", "▀▀▀▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀"],
+  left: ["             ▄          ", "█▀▀▀ █▀▀█ █▀▀█ █▀▀█     ", "█___ █__█ █__█ █^^^ ▀▀▀▀", "▀▀▀▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀     "],
+  right: ["              ", "█▀▀▀ █▀▀█ █   ", "█___ █▀▀█ █   ", "▀▀▀▀ ▀  ▀ ▀▀▀▀"],
 }
 
 export const go = {

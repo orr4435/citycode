@@ -32,6 +32,12 @@ import { batch, onMount } from "solid-js"
 import path from "path"
 import { useKV } from "./kv"
 import { usePermission } from "./permission"
+import { providerDisplayName } from "../util/model"
+
+const renameProvider = <T extends { id: string; name: string }>(provider: T): T => ({
+  ...provider,
+  name: providerDisplayName(provider.id, provider.name),
+})
 
 const emptyConsoleState: ConsoleState = {
   consoleManagedProviders: [],
@@ -503,9 +509,9 @@ export const {
             const sessions = responses[6]
 
             batch(() => {
-              setStore("provider", reconcile(providers.providers))
+              setStore("provider", reconcile(Array.isArray(providers.providers) ? providers.providers.map(renameProvider) : providers.providers))
               setStore("provider_default", reconcile(providers.default))
-              setStore("provider_next", reconcile(providerList))
+              setStore("provider_next", reconcile(Array.isArray(providerList?.all) ? { ...providerList, all: providerList.all.map(renameProvider) } : providerList))
               setStore("capabilities", "experimentalBackgroundSubagents", capabilities?.backgroundSubagents === true)
               setStore("console_state", reconcile(consoleState))
               setStore("agent", reconcile(agents))

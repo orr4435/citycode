@@ -1,4 +1,5 @@
 export const dict = {
+  "app.compat.island": "Compatible with Island Enterprise Browser",
   "command.category.suggested": "Ehdotetut",
   "command.category.view": "Näytä",
   "command.category.project": "Projekti",

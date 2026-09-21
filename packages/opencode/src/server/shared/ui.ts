@@ -2,6 +2,8 @@ import { FSUtil } from "@opencode-ai/core/fs-util"
 import { Effect, Stream } from "effect"
 import { HttpBody, HttpClient, HttpClientRequest, HttpServerRequest, HttpServerResponse } from "effect/unstable/http"
 import { createHash } from "node:crypto"
+import { existsSync, readdirSync } from "node:fs"
+import { join, relative, resolve } from "node:path"
 import { ProxyUtil } from "../proxy-util"
 
 let embeddedUIPromise: Promise<Record<string, string> | null> | undefined
@@ -41,11 +43,32 @@ export function upstreamURL(path: string) {
   return new URL(path, UI_UPSTREAM).toString()
 }
 
+// In a source checkout there is no generated embedded bundle, so `web` used to fall
+// through to proxying the upstream hosted UI — i.e. not this fork's UI at all. If the
+// local app has been built (`bun run build:web`), serve that build instead. Override the
+// location with OPENCODE_WEB_UI_DIR.
+export function localWebUIFiles(dir = process.env.OPENCODE_WEB_UI_DIR ?? resolve(import.meta.dirname, "../../../../app/dist")) {
+  if (!existsSync(join(dir, "index.html"))) return null
+  const files: Record<string, string> = {}
+  const walk = (current: string) => {
+    for (const entry of readdirSync(current, { withFileTypes: true })) {
+      const full = join(current, entry.name)
+      if (entry.isDirectory()) walk(full)
+      else if (!entry.name.endsWith(".map")) files[relative(dir, full).replaceAll("\\", "/")] = full
+    }
+  }
+  walk(dir)
+  return files
+}
+
 export function embeddedUI(disableEmbeddedWebUi: boolean) {
   if (disableEmbeddedWebUi) return Promise.resolve(null)
   return (embeddedUIPromise ??=
     // @ts-expect-error - generated file at build time
-    import("opencode-web-ui.gen.ts").then((module) => module.default as Record<string, string>).catch(() => null))
+    import("opencode-web-ui.gen.ts")
+      .then((module) => module.default as Record<string, string>)
+      .catch(() => null)
+      .then((embedded) => embedded ?? localWebUIFiles()))
 }
 
 function notFound() {

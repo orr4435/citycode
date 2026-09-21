@@ -400,7 +400,7 @@ export function AppBaseProviders(
     <MetaProvider>
       <Font />
       <ThemeProvider
-        defaultTheme="citycode"
+        defaultTheme="code-cal"
         onThemeApplied={(_, mode, scheme) => {
           void window.api?.setTitlebar?.({ mode, scheme })
         }}

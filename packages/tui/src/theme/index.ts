@@ -5,7 +5,7 @@ import carbonfox from "./assets/carbonfox.json" with { type: "json" }
 import catppuccinFrappe from "./assets/catppuccin-frappe.json" with { type: "json" }
 import catppuccinMacchiato from "./assets/catppuccin-macchiato.json" with { type: "json" }
 import catppuccin from "./assets/catppuccin.json" with { type: "json" }
-import citycode from "./assets/citycode.json" with { type: "json" }
+import codeCal from "./assets/code-cal.json" with { type: "json" }
 import cobalt2 from "./assets/cobalt2.json" with { type: "json" }
 import cursor from "./assets/cursor.json" with { type: "json" }
 import dracula from "./assets/dracula.json" with { type: "json" }
@@ -133,7 +133,7 @@ export const DEFAULT_THEMES: Record<string, ThemeJson> = {
   aura,
   ayu,
   catppuccin,
-  citycode,
+  ["code-cal"]: codeCal,
   ["catppuccin-frappe"]: catppuccinFrappe,
   ["catppuccin-macchiato"]: catppuccinMacchiato,
   cobalt2,
