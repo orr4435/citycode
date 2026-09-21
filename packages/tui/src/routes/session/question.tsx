@@ -8,12 +8,14 @@ import { useSDK } from "../../context/sdk"
 import { SplitBorder } from "../../ui/border"
 import { useTuiConfig } from "../../config"
 import { useBindings, useOpencodeModeStack } from "../../keymap"
+import { useLocale } from "../../context/locale"
 
 const QUESTION_MODE = "question"
 
 export function QuestionPrompt(props: { request: QuestionRequest; directory?: string }) {
   const sdk = useSDK()
   const { theme } = useTheme()
+  const locale = useLocale()
   const renderer = useRenderer()
   const tuiConfig = useTuiConfig()
   const modeStack = useOpencodeModeStack()
@@ -328,7 +330,7 @@ export function QuestionPrompt(props: { request: QuestionRequest; directory?: st
                             : theme.textMuted
                       }
                     >
-                      {q.header}
+                      {locale.visual(q.header)}
                     </text>
                   </box>
                 )
@@ -356,7 +358,7 @@ export function QuestionPrompt(props: { request: QuestionRequest; directory?: st
           <box paddingLeft={1} gap={1}>
             <box>
               <text fg={theme.text}>
-                {question()?.question}
+                {locale.visual(question()?.question ?? "")}
                 {multi() ? " (select all that apply)" : ""}
               </text>
             </box>
@@ -382,7 +384,9 @@ export function QuestionPrompt(props: { request: QuestionRequest; directory?: st
                         </box>
                         <box backgroundColor={active() ? theme.backgroundElement : undefined}>
                           <text fg={active() ? theme.secondary : picked() ? theme.success : theme.text}>
-                            {multi() ? `[${picked() ? "✓" : " "}] ${opt.label}` : opt.label}
+                            {multi()
+                              ? `[${picked() ? "✓" : " "}] ${locale.visual(opt.label)}`
+                              : locale.visual(opt.label)}
                           </text>
                         </box>
                         <Show when={!multi()}>
@@ -391,7 +395,7 @@ export function QuestionPrompt(props: { request: QuestionRequest; directory?: st
                       </box>
 
                       <box paddingLeft={3}>
-                        <text fg={theme.textMuted}>{opt.description}</text>
+                        <text fg={theme.textMuted}>{locale.visual(opt.description ?? "")}</text>
                       </box>
                     </box>
                   )
@@ -447,7 +451,7 @@ export function QuestionPrompt(props: { request: QuestionRequest; directory?: st
                   </Show>
                   <Show when={!store.editing && input()}>
                     <box paddingLeft={3}>
-                      <text fg={theme.textMuted}>{input()}</text>
+                      <text fg={theme.textMuted}>{locale.visual(input())}</text>
                     </box>
                   </Show>
                 </box>
@@ -467,9 +471,9 @@ export function QuestionPrompt(props: { request: QuestionRequest; directory?: st
               return (
                 <box paddingLeft={1}>
                   <text>
-                    <span style={{ fg: theme.textMuted }}>{q.header}:</span>{" "}
+                    <span style={{ fg: theme.textMuted }}>{locale.visual(q.header)}:</span>{" "}
                     <span style={{ fg: answered() ? theme.text : theme.error }}>
-                      {answered() ? value() : "(not answered)"}
+                      {answered() ? locale.visual(value()) : "(not answered)"}
                     </span>
                   </text>
                 </box>

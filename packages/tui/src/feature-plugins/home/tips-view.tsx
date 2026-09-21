@@ -2,6 +2,9 @@ import type { TuiPluginApi } from "@opencode-ai/plugin/tui"
 import { createMemo, For, type Accessor } from "solid-js"
 import { DEFAULT_THEMES, useTheme } from "../../context/theme"
 import { useCommandShortcut } from "../../keymap"
+import { useLocale } from "../../context/locale"
+import { translate } from "../../i18n/strings"
+import { KV_SIMPLE_MODE } from "../builtins"
 
 const themeCount = Object.keys(DEFAULT_THEMES).length
 
@@ -71,6 +74,16 @@ function parse(tip: string): TipPart[] {
 const NO_MODELS_TIP = "Run {highlight}/connect{/highlight} to add an AI provider and start coding"
 const NO_MODELS_PARTS = parse(NO_MODELS_TIP)
 
+// Shown instead of the full tip library when simple mode is on — no config files,
+// flags, or CLI jargon, just plain encouragement for someone new to a terminal app.
+const SIMPLE_TIPS: string[] = [
+  "Just type what you want in plain language and press {highlight}Enter{/highlight}",
+  "You can ask questions too — you don't have to give commands",
+  "Not sure what to say? Try {highlight}\"help me get started\"{/highlight}",
+  "You can always undo or ask for changes to be reverted",
+  "Feel free to ask it to explain anything it just did",
+]
+
 function shortcutText(value: string) {
   return `{highlight}${value}{/highlight}`
 }
@@ -96,6 +109,7 @@ function configShortcut(api: TuiPluginApi, command: string): TipShortcut {
 
 export function Tips(props: { api: TuiPluginApi; connected?: boolean }) {
   const theme = useTheme().theme
+  const locale = useLocale()
   const tipOffset = Math.random()
   const shortcuts: Shortcuts = {
     agentCycle: useCommandShortcut("agent.cycle"),
@@ -132,10 +146,17 @@ export function Tips(props: { api: TuiPluginApi; connected?: boolean }) {
     terminalSuspend: useCommandShortcut("terminal.suspend"),
     themeList: useCommandShortcut("theme.switch"),
   }
+  const simpleMode = createMemo(() => props.api.kv.get(KV_SIMPLE_MODE, false))
   const tip = createMemo(() => {
     if (props.connected === false) return NO_MODELS_TIP
+    if (simpleMode()) return SIMPLE_TIPS[Math.floor(tipOffset * SIMPLE_TIPS.length)] ?? SIMPLE_TIPS[0]
     const tips = [...TIPS, process.platform !== "win32" ? TERMINAL_SUSPEND_TIP : INPUT_UNDO_TIP].flatMap((item) => {
-      const value = typeof item === "string" ? item : item(shortcuts)
+      let value = typeof item === "string" ? item : item(shortcuts)
+      // The static tip list is authored in English only. The handful of tips that mention the
+      // brand name have a full translation; swap those in wholesale rather than mixing languages.
+      if (value && locale.locale !== "en" && value in TRANSLATED_TIPS) {
+        value = translate(locale.locale, TRANSLATED_TIPS[value])
+      }
       return value ? [value] : []
     })
     return tips[Math.floor(tipOffset * tips.length)] ?? NO_MODELS_TIP
@@ -154,11 +175,19 @@ export function Tips(props: { api: TuiPluginApi; connected?: boolean }) {
       </text>
       <text flexShrink={1} wrapMode="word">
         <For each={parts()}>
-          {(part) => <span style={{ fg: part.highlight ? theme.text : theme.textMuted }}>{part.text}</span>}
+          {(part) => (
+            <span style={{ fg: part.highlight ? theme.text : theme.textMuted }}>{locale.visual(part.text)}</span>
+          )}
         </For>
       </text>
     </box>
   )
+}
+
+// Maps the literal English tip text (below) to its i18n key, for locales with a full translation.
+const TRANSLATED_TIPS: Record<string, Parameters<typeof translate>[1]> = {
+  "Create a plugin to prevent CityCode from reading sensitive files": "tips.prevent_reading",
+  "Run {highlight}opencode serve{/highlight} for headless API access to CityCode": "tips.headless",
 }
 
 const TIPS: Tip[] = [
@@ -233,12 +262,12 @@ const TIPS: Tip[] = [
   "Tool definitions can invoke scripts written in Python, Go, etc",
   "Add {highlight}.ts{/highlight} files to {highlight}.opencode/plugins/{/highlight} for event hooks",
   "Use plugins to send OS notifications when sessions complete",
-  "Create a plugin to prevent OpenCode from reading sensitive files",
+  "Create a plugin to prevent CityCode from reading sensitive files",
   "Use {highlight}opencode run{/highlight} for non-interactive scripting",
   "Use {highlight}opencode --continue{/highlight} to resume the last session",
   "Use {highlight}opencode run -f file.ts{/highlight} to attach files via CLI",
   "Use {highlight}--format json{/highlight} for machine-readable output in scripts",
-  "Run {highlight}opencode serve{/highlight} for headless API access to OpenCode",
+  "Run {highlight}opencode serve{/highlight} for headless API access to CityCode",
   "Use {highlight}opencode run --attach{/highlight} to connect to a running server",
   "Run {highlight}opencode upgrade{/highlight} to update to the latest version",
   "Run {highlight}opencode auth list{/highlight} to see all configured providers",

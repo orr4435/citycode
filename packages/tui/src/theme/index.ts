@@ -5,11 +5,13 @@ import carbonfox from "./assets/carbonfox.json" with { type: "json" }
 import catppuccinFrappe from "./assets/catppuccin-frappe.json" with { type: "json" }
 import catppuccinMacchiato from "./assets/catppuccin-macchiato.json" with { type: "json" }
 import catppuccin from "./assets/catppuccin.json" with { type: "json" }
+import citycode from "./assets/citycode.json" with { type: "json" }
 import cobalt2 from "./assets/cobalt2.json" with { type: "json" }
 import cursor from "./assets/cursor.json" with { type: "json" }
 import dracula from "./assets/dracula.json" with { type: "json" }
 import everforest from "./assets/everforest.json" with { type: "json" }
 import flexoki from "./assets/flexoki.json" with { type: "json" }
+import friendly from "./assets/friendly.json" with { type: "json" }
 import github from "./assets/github.json" with { type: "json" }
 import gruvbox from "./assets/gruvbox.json" with { type: "json" }
 import kanagawa from "./assets/kanagawa.json" with { type: "json" }
@@ -131,6 +133,7 @@ export const DEFAULT_THEMES: Record<string, ThemeJson> = {
   aura,
   ayu,
   catppuccin,
+  citycode,
   ["catppuccin-frappe"]: catppuccinFrappe,
   ["catppuccin-macchiato"]: catppuccinMacchiato,
   cobalt2,
@@ -138,6 +141,7 @@ export const DEFAULT_THEMES: Record<string, ThemeJson> = {
   dracula,
   everforest,
   flexoki,
+  friendly,
   github,
   gruvbox,
   kanagawa,

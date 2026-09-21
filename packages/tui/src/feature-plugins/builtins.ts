@@ -10,7 +10,10 @@ import SidebarTodo from "./sidebar/todo"
 import DiffViewer from "./system/diff-viewer"
 import Notifications from "./system/notifications"
 import PluginManager from "./system/plugins"
+import SimpleMode, { KV_SIMPLE_MODE } from "./system/simple-mode"
 import WhichKey from "./system/which-key"
+
+export { KV_SIMPLE_MODE }
 
 export type BuiltinTuiPlugin = Omit<TuiPluginModule, "id"> & {
   id: string
@@ -30,6 +33,7 @@ export function createBuiltinPlugins(options: { experimentalEventSystem: boolean
     SidebarFooter,
     Notifications,
     PluginManager,
+    SimpleMode,
     WhichKey,
     DiffViewer,
   ]

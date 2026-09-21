@@ -1,5 +1,5 @@
 import type { TuiPlugin, TuiPluginApi } from "@opencode-ai/plugin/tui"
-import type { BuiltinTuiPlugin } from "../builtins"
+import { KV_SIMPLE_MODE, type BuiltinTuiPlugin } from "../builtins"
 import { createMemo, For, Show, createSignal } from "solid-js"
 import { TodoItem } from "../../component/todo-item"
 
@@ -35,7 +35,12 @@ const tui: TuiPlugin = async (api) => {
     order: 400,
     slots: {
       sidebar_content(_ctx, props) {
-        return <View api={api} session_id={props.session_id} />
+        const simpleMode = createMemo(() => api.kv.get(KV_SIMPLE_MODE, false))
+        return (
+          <Show when={!simpleMode()}>
+            <View api={api} session_id={props.session_id} />
+          </Show>
+        )
       },
     },
   })

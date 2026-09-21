@@ -48,6 +48,8 @@ import { DialogAlert } from "../../ui/dialog-alert"
 import { useToast } from "../../ui/toast"
 import { useKV } from "../../context/kv"
 import { createFadeIn } from "../../util/signal"
+import { useLocale } from "../../context/locale"
+import { containsRtl } from "../../i18n/bidi"
 import { DialogSkill } from "../dialog-skill"
 import { DialogWorkspaceUnavailable } from "../dialog-workspace-unavailable"
 import { useArgs } from "../../context/args"
@@ -1345,6 +1347,24 @@ export function Prompt(props: PromptProps) {
   const maxHeight = createMemo(() => tuiConfig.prompt?.max_height ?? Math.max(6, Math.floor(dimensions().height / 3)))
   const moveLabelWidth = createMemo(() => Math.max(12, Math.min(44, dimensions().width - 48)))
 
+  // The textarea widget has no bidi support and draws Hebrew mirrored while typing.
+  // We can't fix that widget itself, so show a live, correctly-ordered preview instead.
+  const locale = useLocale()
+  const hasHebrewPreview = createMemo(() => containsRtl(store.prompt.input))
+  const previewText = createMemo(() =>
+    store.prompt.input
+      .split("\n")
+      .map((line) => locale.visual(line))
+      .join("\n"),
+  )
+  const previewFadeAlpha = createFadeIn(hasHebrewPreview, animationsEnabled)
+  // Terminals can't shrink a font per-widget (every cell is a fixed size set by the
+  // terminal app itself), so instead of shrinking, fade the raw mirrored text toward
+  // the background as the corrected preview above fades in. The box stays editable —
+  // cursor and backspace still work normally — it's just visually de-emphasized so the
+  // corrected preview line is what you actually read.
+  const rawInputColor = (base: RGBA) => fadeColor(base, 1 - previewFadeAlpha() * 0.85)
+
   return (
     <>
       <box ref={(r: BoxRenderable) => (anchor = r)} visible={props.visible !== false} width="100%">
@@ -1366,12 +1386,20 @@ export function Prompt(props: PromptProps) {
             flexGrow={1}
             width="100%"
           >
+            <Show when={hasHebrewPreview()}>
+              <box flexDirection="row" gap={1} paddingBottom={1}>
+                <text fg={tint(theme.backgroundElement, theme.textMuted, previewFadeAlpha())}>↺</text>
+                <text wrapMode="word" fg={tint(theme.backgroundElement, theme.primary, previewFadeAlpha())}>
+                  {previewText()}
+                </text>
+              </box>
+            </Show>
             <textarea
               width="100%"
               placeholder={placeholderText()}
               placeholderColor={theme.textMuted}
-              textColor={leader() ? theme.textMuted : theme.text}
-              focusedTextColor={leader() ? theme.textMuted : theme.text}
+              textColor={rawInputColor(leader() ? theme.textMuted : theme.text)}
+              focusedTextColor={rawInputColor(leader() ? theme.textMuted : theme.text)}
               minHeight={1}
               maxHeight={maxHeight()}
               onContentChange={() => {

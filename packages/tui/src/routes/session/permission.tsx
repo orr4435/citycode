@@ -11,6 +11,7 @@ import { useSync } from "../../context/sync"
 import { useProject } from "../../context/project"
 import { filetype } from "../../util/filetype"
 import { Locale } from "../../util/locale"
+import { useLocale } from "../../context/locale"
 import { webSearchProviderLabel } from "../../util/tool-display"
 import { getScrollAcceleration } from "../../util/scroll"
 import { useTuiConfig } from "../../config"
@@ -132,6 +133,7 @@ export function PermissionPrompt(props: { request: PermissionRequest; directory?
   })
 
   const { theme } = useTheme()
+  const locale = useLocale()
 
   return (
     <Switch>
@@ -141,11 +143,11 @@ export function PermissionPrompt(props: { request: PermissionRequest; directory?
           body={
             <Switch>
               <Match when={props.request.always.length === 1 && props.request.always[0] === "*"}>
-                <TextBody title={"This will allow " + props.request.permission + " until OpenCode is restarted."} />
+                <TextBody title={locale.tv("permission.restart.until", props.request.permission)} />
               </Match>
               <Match when={true}>
                 <box paddingLeft={1} gap={1}>
-                  <text fg={theme.textMuted}>This will allow the following patterns until OpenCode is restarted</text>
+                  <text fg={theme.textMuted}>{locale.tv("permission.restart.patterns")}</text>
                   <box>
                     <For each={props.request.always}>
                       {(pattern) => (
@@ -443,6 +445,7 @@ export function PermissionPrompt(props: { request: PermissionRequest; directory?
 function RejectPrompt(props: { onConfirm: (message: string) => void; onCancel: () => void }) {
   let input: TextareaRenderable
   const { theme } = useTheme()
+  const locale = useLocale()
   const tuiConfig = useTuiConfig()
   const dimensions = useTerminalDimensions()
   const narrow = createMemo(() => dimensions().width < 80)
@@ -483,7 +486,7 @@ function RejectPrompt(props: { onConfirm: (message: string) => void; onCancel: (
           <text fg={theme.text}>Reject permission</text>
         </box>
         <box paddingLeft={1}>
-          <text fg={theme.textMuted}>Tell OpenCode what to do differently</text>
+          <text fg={theme.textMuted}>{locale.tv("permission.feedback")}</text>
         </box>
       </box>
       <box

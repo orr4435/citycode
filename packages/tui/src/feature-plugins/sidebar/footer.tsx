@@ -3,12 +3,14 @@ import type { BuiltinTuiPlugin } from "../builtins"
 import { createMemo, Show } from "solid-js"
 import { abbreviateHome } from "../../runtime"
 import { useTuiPaths } from "../../context/runtime"
+import { useLocale } from "../../context/locale"
 
 const id = "internal:sidebar-footer"
 
 function View(props: { api: TuiPluginApi; sessionID: string }) {
   const paths = useTuiPaths()
   const theme = () => props.api.theme.current
+  const locale = useLocale()
   const has = createMemo(() =>
     props.api.state.provider.some(
       (item) => item.id !== "opencode" || Object.values(item.models).some((model) => model.cost?.input !== 0),
@@ -53,7 +55,7 @@ function View(props: { api: TuiPluginApi; sessionID: string }) {
                 ✕
               </text>
             </box>
-            <text fg={theme().textMuted}>OpenCode includes free models so you can start immediately.</text>
+            <text fg={theme().textMuted}>{locale.tv("sidebar.footer.free_models")}</text>
             <text fg={theme().textMuted}>
               Connect from 75+ providers to use other models, including Claude, GPT, Gemini etc
             </text>
@@ -69,9 +71,12 @@ function View(props: { api: TuiPluginApi; sessionID: string }) {
         <span style={{ fg: theme().text }}>{path().name}</span>
       </text>
       <text fg={theme().textMuted}>
-        <span style={{ fg: theme().success }}>•</span> <b>Open</b>
-        <span style={{ fg: theme().text }}>
-          <b>Code</b>
+        <span style={{ fg: theme().success }}>•</span>{" "}
+        <b style={{ fg: locale.brandPartsVisual()[0].bold ? theme().text : theme().textMuted }}>
+          {locale.brandPartsVisual()[0].text}
+        </b>
+        <span style={{ fg: locale.brandPartsVisual()[1].bold ? theme().text : theme().textMuted }}>
+          <b>{locale.brandPartsVisual()[1].text}</b>
         </span>{" "}
         <span>{props.api.app.version}</span>
       </text>

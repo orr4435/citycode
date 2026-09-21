@@ -24,7 +24,15 @@ import { SplitBorder } from "../../ui/border"
 import { useTuiPaths, useTuiTerminalEnvironment } from "../../context/runtime"
 import { Spinner } from "../../component/spinner"
 import { createSyntaxStyleMemo, generateSubtleSyntax, selectedForeground, useTheme } from "../../context/theme"
-import { BoxRenderable, ScrollBoxRenderable, addDefaultParsers, TextAttributes, RGBA } from "@opentui/core"
+import {
+  BoxRenderable,
+  ScrollBoxRenderable,
+  addDefaultParsers,
+  TextAttributes,
+  RGBA,
+  type Renderable,
+  type RenderNodeContext,
+} from "@opentui/core"
 import { Prompt, type PromptRef } from "../../component/prompt"
 import type {
   AssistantMessage,
@@ -37,6 +45,8 @@ import type {
   SessionStatus,
 } from "@opencode-ai/sdk/v2"
 import { useLocal } from "../../context/local"
+import { useLocale } from "../../context/locale"
+import { correctMarkdownRaw } from "../../i18n/bidi"
 import { Locale } from "../../util/locale"
 import { webSearchProviderLabel } from "../../util/tool-display"
 import { Dynamic, useRenderer, useTerminalDimensions, type JSX } from "@opentui/solid"
@@ -1370,6 +1380,7 @@ function UserMessage(props: {
 }) {
   const ctx = use()
   const local = useLocal()
+  const locale = useLocale()
   const text = createMemo(() => {
     const texts = props.parts
       .map((x) => {
@@ -1416,7 +1427,12 @@ function UserMessage(props: {
             backgroundColor={hover() ? theme.backgroundElement : theme.backgroundPanel}
             flexShrink={0}
           >
-            <text fg={theme.text}>{text()}</text>
+            <text fg={theme.text}>
+              {text()
+                .split("\n")
+                .map((line) => locale.visual(line))
+                .join("\n")}
+            </text>
             <Show when={files().length}>
               <box flexDirection="row" paddingBottom={metadataVisible() ? 1 : 0} paddingTop={1} gap={1} flexWrap="wrap">
                 <For each={files()}>
@@ -1683,6 +1699,36 @@ function ReasoningHeader(props: {
   )
 }
 
+// opentui's markdown renderer has no bidi awareness: every block (including plain
+// paragraphs) is handed to a tree-sitter syntax highlighter as raw markdown source, so
+// Hebrew/Arabic prose in an assistant reply renders mirrored. This hooks the documented
+// `renderNode` extension point and corrects the block's raw text *before* opentui ever
+// parses it, so its normal markdown parsing, syntax highlighting, and layout all run
+// unchanged on already-corrected text. See `correctMarkdownRaw` for exactly which lines
+// are safe to touch (plain prose only — lines with markdown syntax are left as-is).
+type MarkdownNode = { type?: string; raw?: string; text?: string; tokens?: MarkdownNode[]; items?: MarkdownNode[] }
+
+// Walks a block token and any nested prose (list items, list item paragraphs) and
+// bidi-corrects each one's raw text in place. Deliberately does not descend into code,
+// table, or html tokens.
+function bidiCorrectTree(node: MarkdownNode) {
+  if (node.type === "code" || node.type === "table" || node.type === "html") return
+  if (
+    (node.type === "paragraph" || node.type === "heading" || node.type === "text" || node.type === "list_item") &&
+    typeof node.raw === "string"
+  ) {
+    node.raw = correctMarkdownRaw(node.raw)
+    if (typeof node.text === "string") node.text = correctMarkdownRaw(node.text)
+  }
+  for (const child of node.tokens ?? []) bidiCorrectTree(child)
+  for (const item of node.items ?? []) bidiCorrectTree(item)
+}
+
+function bidiCorrectNode(token: unknown, context: RenderNodeContext): Renderable | null | undefined {
+  bidiCorrectTree(token as MarkdownNode)
+  return context.defaultRender()
+}
+
 function TextPart(props: { last: boolean; part: TextPart; message: AssistantMessage }) {
   const ctx = use()
   const { theme, syntax } = useTheme()
@@ -1698,6 +1744,7 @@ function TextPart(props: { last: boolean; part: TextPart; message: AssistantMess
           conceal={ctx.conceal()}
           fg={theme.markdownText}
           bg={theme.background}
+          renderNode={(token, context) => bidiCorrectNode(token, context)}
         />
       </box>
     </Show>

@@ -1,5 +1,5 @@
 import type { TuiPlugin, TuiPluginApi } from "@opencode-ai/plugin/tui"
-import type { BuiltinTuiPlugin } from "../builtins"
+import { KV_SIMPLE_MODE, type BuiltinTuiPlugin } from "../builtins"
 import { createMemo, For, Show, createSignal } from "solid-js"
 
 const id = "internal:sidebar-lsp"
@@ -51,7 +51,12 @@ const tui: TuiPlugin = async (api) => {
     order: 300,
     slots: {
       sidebar_content() {
-        return <View api={api} />
+        const simpleMode = createMemo(() => api.kv.get(KV_SIMPLE_MODE, false))
+        return (
+          <Show when={!simpleMode()}>
+            <View api={api} />
+          </Show>
+        )
       },
     },
   })

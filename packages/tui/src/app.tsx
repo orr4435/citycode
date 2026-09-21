@@ -51,6 +51,8 @@ import { DialogSessionList } from "./component/dialog-session-list"
 import { DialogWorkspaceList } from "./component/dialog-workspace-list"
 import { DialogConsoleOrg } from "./component/dialog-console-org"
 import { ThemeProvider, useTheme } from "./context/theme"
+import { LocaleProvider, useLocale } from "./context/locale"
+import { DialogLanguageList } from "./component/dialog-language-list"
 import { Home } from "./routes/home"
 import { Session } from "./routes/session"
 import { PromptHistoryProvider } from "./component/prompt/history"
@@ -123,6 +125,7 @@ const appBindingCommands = [
   "theme.switch",
   "theme.switch_mode",
   "theme.mode.lock",
+  "language.switch",
   "help.show",
   "docs.open",
   "diff.open",
@@ -306,6 +309,7 @@ export const run = Effect.fn("Tui.run")(function* (input: TuiInput) {
                                             <ProjectProvider>
                                               <SyncProvider>
                                                 <DataProvider>
+                                                  <LocaleProvider>
                                                   <ThemeProvider mode={mode}>
                                                     <LocalProvider>
                                                       <PromptStashProvider>
@@ -328,6 +332,7 @@ export const run = Effect.fn("Tui.run")(function* (input: TuiInput) {
                                                       </PromptStashProvider>
                                                     </LocalProvider>
                                                   </ThemeProvider>
+                                                  </LocaleProvider>
                                                 </DataProvider>
                                               </SyncProvider>
                                             </ProjectProvider>
@@ -379,6 +384,7 @@ function App(props: { onSnapshot?: () => Promise<string[]>; pluginHost: TuiPlugi
   const toast = useToast()
   const themeState = useTheme()
   const { theme, mode, setMode, locked, lock, unlock } = themeState
+  const locale = useLocale()
   const sync = useSync()
   const project = useProject()
   const exit = useExit()
@@ -456,24 +462,26 @@ function App(props: { onSnapshot?: () => Promise<string[]>; pluginHost: TuiPlugi
     if (!terminalTitleEnabled() || Flag.OPENCODE_DISABLE_TERMINAL_TITLE) return
 
     if (route.data.type === "home") {
-      renderer.setTerminalTitle("OpenCode")
+      renderer.setTerminalTitle(locale.t("app.terminal_title"))
       return
     }
+
+    const shortTag = locale.locale === "he" ? "קק" : "CC"
 
     if (route.data.type === "session") {
       const session = sync.session.get(route.data.sessionID)
       if (!session || isDefaultTitle(session.title)) {
-        renderer.setTerminalTitle("OpenCode")
+        renderer.setTerminalTitle(locale.t("app.terminal_title"))
         return
       }
 
       const title = session.title.length > 40 ? session.title.slice(0, 37) + "…" : session.title
-      renderer.setTerminalTitle(`OC | ${title}`)
+      renderer.setTerminalTitle(`${shortTag} | ${title}`)
       return
     }
 
     if (route.data.type === "plugin") {
-      renderer.setTerminalTitle(`OC | ${route.data.id}`)
+      renderer.setTerminalTitle(`${shortTag} | ${route.data.id}`)
     }
   })
 
@@ -790,6 +798,15 @@ function App(props: { onSnapshot?: () => Promise<string[]>; pluginHost: TuiPlugi
         category: "System",
       },
       {
+        name: "language.switch",
+        title: "Switch language",
+        slashName: "language",
+        run: () => {
+          dialog.replace(() => <DialogLanguageList />)
+        },
+        category: "System",
+      },
+      {
         name: "theme.switch_mode",
         title: mode() === "dark" ? "Switch to light mode" : "Switch to dark mode",
         run: () => {
@@ -1069,11 +1086,7 @@ function App(props: { onSnapshot?: () => Promise<string[]>; pluginHost: TuiPlugi
       return
     }
 
-    await DialogAlert.show(
-      dialog,
-      "Update Complete",
-      `Successfully updated to OpenCode v${result.data.version}. Please restart the application.`,
-    )
+    await DialogAlert.show(dialog, "Update Complete", locale.tv("app.update_complete", result.data.version))
 
     void exit()
   })
